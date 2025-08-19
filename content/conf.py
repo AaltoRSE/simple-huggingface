@@ -47,7 +47,7 @@ myst_fence_as_directive = ["mermaid"]
 
 mermaid_output_format = "svg"
 
-mermaid_params = ['--no-sandbox', '--height', '800','--width', '600', '--backgroundColor', 'transparent']
+mermaid_params = ['--height', '800','--width', '600', '--backgroundColor', 'transparent']
 
 myst_enable_extensions = [
     "colon_fence",  # ::: can be used instead of ``` for better rendering
