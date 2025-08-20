@@ -13,10 +13,6 @@ jobs:
     name: Build and gh-pages
     runs-on: ubuntu-latest
     steps:
-      # Disable apparmor
-      - name: Disable apparmor
-        run: |
-          sudo systemctl stop apparmor
       # https://github.com/marketplace/actions/checkout
       - uses: actions/checkout@v4
         with:
@@ -65,7 +61,9 @@ jobs:
           pip list
           npm -v
           mmdc -V
-
+      - name: Modify conf.py to run mermaid via app armor
+        run: |
+          sed -i 's/#mermaid_cmd/mermaid_cmd/g' content/conf.py
 
       # Build
       - uses: ammaraskar/sphinx-problem-matcher@master
