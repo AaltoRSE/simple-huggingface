@@ -23,8 +23,6 @@ echo "Rank $SLURM_PROCID --> $(taskset -p $$)"
 # ROCm/HIP environment setup
 export ROCR_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 export HIP_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-export HSA_ENABLE_SDMA=0
-# export PYTORCH_HIP_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb
 
 # RCCL/NCCL configuration for AMD GPUs
 export RCCL_DEBUG=WARN
@@ -32,18 +30,12 @@ export NCCL_DEBUG=WARN
 export RCCL_ENABLE_P2P=1
 export NCCL_P2P_DISABLE=1
 export NCCL_IB_DISABLE=1
-export NCCL_NET_GDR_LEVEL=PHB
-export RCCL_MSCCL_ENABLE=0
 
 # Set NCCL timeout and debugging variables - INCREASED TIMEOUT
-export NCCL_TIMEOUT=1800  # 1 hour instead of 30 minutes
+export NCCL_TIMEOUT=1800 
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
-export TORCH_NCCL_BLOCKING_WAIT=1  # Changed to 1 for better error handling
-# export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=3600  # Add heartbeat timeout
+export TORCH_NCCL_BLOCKING_WAIT=1
 
-# # Add RNG synchronization fix
-# export PYTHONHASHSEED=42  # Fixed hash seed for reproducibility
-# export TORCH_NCCL_TRACE_BUFFER_SIZE=2048  # Enable trace buffer for debugging
 
 # Set interfaces to be used by RCCL.
 export NCCL_SOCKET_IFNAME=hsn0,hsn1,hsn2,hsn3
@@ -68,17 +60,9 @@ echo "World size: $WORLD_SIZE"
 echo "Nodes: $SLURM_NODELIST"
 echo "Visible devices: $ROCR_VISIBLE_DEVICES"
 
-# use the project directory as Huggingface cache folder
 export HF_HOME=/workdir
-
-# export TRANSFORMERS_OFFLINE=0
-# export HF_DATASETS_OFFLINE=0
-# echo 
 set -x
-export OMP_NUM_THREADS=8
-echo "SLURM Process ID: $SLURM_PROCID"
 
-# Set Accelerate configuration file
 export ACCELERATE_CONFIG_FILE="/workdir/fsdp_config.yaml"
 
 NUM_PROCESSES=$(expr $SLURM_NNODES \* 8)

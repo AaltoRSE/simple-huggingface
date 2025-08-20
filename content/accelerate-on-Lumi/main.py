@@ -14,6 +14,7 @@ import logging
 import argparse
 
 from peft import LoraConfig, get_peft_model, TaskType
+from peft import PeftModel  
 from utils import create_datasets
 
 class CustomDataCollator:
@@ -113,7 +114,7 @@ def main():
             level=logging.INFO,
             force=True
         )
-        
+        # Silence third-party libraries
         logging.getLogger("transformers").setLevel(logging.WARNING)
         logging.getLogger("datasets").setLevel(logging.WARNING)
         logging.getLogger("accelerate").setLevel(logging.WARNING)
@@ -126,7 +127,7 @@ def main():
             level=logging.ERROR,
             force=True
         )
-        
+        # Silence third-party libraries
         logging.getLogger("transformers").setLevel(logging.CRITICAL)
         logging.getLogger("datasets").setLevel(logging.CRITICAL)
         logging.getLogger("accelerate").setLevel(logging.CRITICAL)
@@ -159,11 +160,9 @@ def main():
     else:
         torch_dtype = torch.float32
     
- 
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
         torch_dtype=torch_dtype,
-        # device_map={"": "cpu"},
         trust_remote_code=True,
         attn_implementation="eager",
     )
@@ -178,20 +177,11 @@ def main():
             r=args.lora_r,
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout,
-            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # Common for LLaMA
-            # bias="none",  # Explicitly set bias handling
-            init_lora_weights=True,  # Ensure proper initialization
+            target_modules=["q_proj", "k_proj", "v_proj", "o_proj"], 
+            init_lora_weights=True,
         )
         model = get_peft_model(model, lora_config)
         
-        # # Initialize LoRA weights properly to prevent NaN
-        # for name, module in model.named_modules():
-        #     if hasattr(module, 'lora_A') and hasattr(module, 'lora_B'):
-        #         # Re-initialize LoRA weights with smaller values
-        #         if hasattr(module.lora_A, 'default'):
-        #             torch.nn.init.normal_(module.lora_A.default.weight, std=0.01)
-        #         if hasattr(module.lora_B, 'default'):
-        #             torch.nn.init.zeros_(module.lora_B.default.weight)
         
         if accelerator.is_main_process:
             trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -280,9 +270,6 @@ def main():
     if accelerator.is_main_process:
         logger.info(f"Training: {num_training_steps} steps, {warmup_steps} warmup, LR={args.learning_rate}")
     
-    # Wait for all processes before preparing
-    # accelerator.wait_for_everyone()
-    
     # Prepare everything with accelerator - with error handling
     try:
         model, optimizer, train_dataloader, eval_dataloader, lr_scheduler = accelerator.prepare(
@@ -293,10 +280,6 @@ def main():
     except Exception as e:
         logger.error(f"Failed to prepare components: {e}")
         raise
-    
-    # Initialize tracker
-    # if accelerator.is_main_process:
-    #     accelerator.init_trackers("fsdp_training")
     
     # Training loop
     total_steps = 0
@@ -399,8 +382,7 @@ def main():
     if args.use_lora:
         # For LoRA models, save only the adapters first
         lora_dir = os.path.join(args.output_dir, "lora_adapters")
-        
-        # Use accelerator.save_model for distributed-safe saving
+        # Save LoRA adapters
         accelerator.save_model(model, lora_dir)
         
         if accelerator.is_main_process:
@@ -408,11 +390,8 @@ def main():
             tokenizer.save_pretrained(lora_dir)
             logger.info(f"LoRA adapters saved to {lora_dir}")
             
-            # Option 2: Merge and save full model (only on main process after adapters are saved)
             logger.info("Merging LoRA weights with base model...")
             
-            # Load the saved LoRA model to merge
-            from peft import PeftModel
             base_model = AutoModelForCausalLM.from_pretrained(
                 args.model_name,
                 torch_dtype=torch_dtype,
