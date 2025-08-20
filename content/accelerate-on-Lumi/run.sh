@@ -96,7 +96,7 @@ export CMD="/workdir/main.py \
     --model_name meta-llama/Llama-2-7b-chat-hf \
     --dataset_name smangrul/code-chat-assistant-v1 \
     --dataset_splits train,test \
-    --batch_size 2 \
+    --batch_size 4 \
     --gradient_accumulation_steps 2 \
     --learning_rate 5e-5 \
     --num_epochs 2 \
@@ -107,7 +107,7 @@ export CMD="/workdir/main.py \
     --lora_alpha 32 \
     --lora_dropout 0.1 \
     --mixed_precision bf16 \
-    --logging_steps 25 \
+    --logging_steps 10 \
     --save_steps 250 \
     --output_dir /workdir/outputs/llama2-7b-code-chat-lora \
     --max_grad_norm 0.3"

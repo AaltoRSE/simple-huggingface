@@ -4,24 +4,17 @@ import torch.distributed
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
-    get_scheduler,
     get_linear_schedule_with_warmup,
 )
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
 from accelerate import Accelerator
-from accelerate import FullyShardedDataParallelPlugin, DistributedDataParallelKwargs
-from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
 from tqdm.auto import tqdm
 import logging
 import argparse
 
-# LoRA imports
 from peft import LoraConfig, get_peft_model, TaskType
-
 from utils import create_datasets
-
-
 
 class CustomDataCollator:
     def __init__(self, tokenizer):
@@ -73,7 +66,6 @@ def parse_args():
     parser.add_argument("--gradient_accumulation_steps", type=int, default=1, help="Gradient accumulation steps")
     parser.add_argument("--max_grad_norm", type=float, default=1.0, help="Max gradient norm for clipping")
     parser.add_argument("--max_length", type=int, default=512, help="Maximum sequence length")
-    # Add missing arguments that are used in launch script
     parser.add_argument("--use_lora", action="store_true", help="Use LoRA for efficient fine-tuning")
     parser.add_argument("--lora_r", type=int, default=16, help="LoRA rank")
     parser.add_argument("--lora_alpha", type=int, default=32, help="LoRA alpha")
@@ -87,25 +79,19 @@ def parse_args():
 
 def tokenize_function(examples, tokenizer, max_length):
     """Tokenize function for causal language modeling"""
-    # Since we only have 'content' column, process it directly
     tokenized = tokenizer(
         examples['content'],
         truncation=True,
-        padding=False,  # Don't pad here, let the collator handle it
+        padding=False,
         max_length=max_length,
         return_special_tokens_mask=False,
     )
     
-    # For causal language modeling, labels are the same as input_ids
-    # Make a proper copy of the input_ids for labels
     tokenized["labels"] = [ids.copy() for ids in tokenized["input_ids"]]
     
-    # Filter out sequences that are too short (less than 10 tokens)
-    # This can help prevent training instability
     valid_indices = [i for i, ids in enumerate(tokenized["input_ids"]) if len(ids) >= 10]
     
     if len(valid_indices) < len(tokenized["input_ids"]):
-        # Filter all fields to keep only valid sequences
         for key in tokenized.keys():
             tokenized[key] = [tokenized[key][i] for i in valid_indices]
     
@@ -115,73 +101,57 @@ def tokenize_function(examples, tokenizer, max_length):
 def main():
     args = parse_args()
     
-    # Initialize accelerator first to get process info
     accelerator = Accelerator(
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        log_with="tensorboard",
         project_dir=args.output_dir,
     )
-    
-    # Setup logging AFTER accelerator initialization
-    # Configure logging to minimize redundancy across 16 GPUs
+
     if accelerator.is_main_process:
         logging.basicConfig(
-            format="%(asctime)s - %(levelname)s - %(message)s",  # Simplified format
-            datefmt="%H:%M:%S",  # Shorter timestamp
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            datefmt="%H:%M:%S",
             level=logging.INFO,
-            force=True  # Override any existing logging configuration
+            force=True
         )
         
-        # Reduce verbosity of third-party libraries
         logging.getLogger("transformers").setLevel(logging.WARNING)
         logging.getLogger("datasets").setLevel(logging.WARNING)
         logging.getLogger("accelerate").setLevel(logging.WARNING)
         logging.getLogger("torch").setLevel(logging.WARNING)
         logging.getLogger("peft").setLevel(logging.WARNING)
     else:
-        # Silence all non-critical logging from worker processes
         logging.basicConfig(
             format="%(asctime)s - RANK{} - %(levelname)s - %(message)s".format(accelerator.process_index),
             datefmt="%H:%M:%S",
-            level=logging.ERROR,  # Only show errors from worker processes
+            level=logging.ERROR,
             force=True
         )
         
-        # Completely silence third-party libraries on worker processes
         logging.getLogger("transformers").setLevel(logging.CRITICAL)
         logging.getLogger("datasets").setLevel(logging.CRITICAL)
         logging.getLogger("accelerate").setLevel(logging.CRITICAL)
         logging.getLogger("torch").setLevel(logging.CRITICAL)
         logging.getLogger("peft").setLevel(logging.CRITICAL)
     
-    # Make output directory
     if accelerator.is_main_process:
         os.makedirs(args.output_dir, exist_ok=True)
     
-    # Setup logging
     logger = logging.getLogger(__name__)
     
-    # Only log from main process for general info
     if accelerator.is_main_process:
         logger.info(f"Mixed precision: {accelerator.mixed_precision} | GPUs: {accelerator.num_processes}")
         logger.info(f"Model: {args.model_name}")
         if args.use_lora:
             logger.info(f"LoRA: r={args.lora_r}, alpha={args.lora_alpha}")
     
-    # Remove redundant per-process device logging that was causing spam
-    # Only log critical errors from individual processes, not general info
-    
-    # Load tokenizer and model
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "right"
     
-    # Minimal tokenizer info logging - only from main process
     if accelerator.is_main_process:
         logger.info(f"Tokenizer loaded, pad_token_id: {tokenizer.pad_token_id}")
     
-    # Determine torch dtype based on accelerator's mixed precision
     if accelerator.mixed_precision == "fp16":
         torch_dtype = torch.float16
     elif accelerator.mixed_precision == "bf16":
@@ -193,7 +163,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         args.model_name,
         torch_dtype=torch_dtype,
-        device_map={"": "cpu"},  # Keep on CPU; accelerator.prepare will place/shard
+        # device_map={"": "cpu"},
         trust_remote_code=True,
         attn_implementation="eager",
     )
@@ -209,22 +179,21 @@ def main():
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout,
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # Common for LLaMA
-            bias="none",  # Explicitly set bias handling
+            # bias="none",  # Explicitly set bias handling
             init_lora_weights=True,  # Ensure proper initialization
         )
         model = get_peft_model(model, lora_config)
         
-        # Initialize LoRA weights properly to prevent NaN
-        for name, module in model.named_modules():
-            if hasattr(module, 'lora_A') and hasattr(module, 'lora_B'):
-                # Re-initialize LoRA weights with smaller values
-                if hasattr(module.lora_A, 'default'):
-                    torch.nn.init.normal_(module.lora_A.default.weight, std=0.01)
-                if hasattr(module.lora_B, 'default'):
-                    torch.nn.init.zeros_(module.lora_B.default.weight)
+        # # Initialize LoRA weights properly to prevent NaN
+        # for name, module in model.named_modules():
+        #     if hasattr(module, 'lora_A') and hasattr(module, 'lora_B'):
+        #         # Re-initialize LoRA weights with smaller values
+        #         if hasattr(module.lora_A, 'default'):
+        #             torch.nn.init.normal_(module.lora_A.default.weight, std=0.01)
+        #         if hasattr(module.lora_B, 'default'):
+        #             torch.nn.init.zeros_(module.lora_B.default.weight)
         
         if accelerator.is_main_process:
-            # Get trainable parameters count without verbose output
             trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
             total_params = sum(p.numel() for p in model.parameters())
             logger.info(f"LoRA enabled: {trainable_params:,}/{total_params:,} ({100 * trainable_params / total_params:.2f}%) trainable")
@@ -241,9 +210,7 @@ def main():
         tokenizer,
         args.dataset_name,
         args.dataset_splits,
-        training_args=args,
-        verbose=accelerator.is_main_process,  # Only show dataset info from main process
-        # apply_chat_template=True,  # Enable chat template if your dataset has 'messages' column
+        verbose=accelerator.is_main_process,
     )
     
     # Tokenize datasets
@@ -268,21 +235,23 @@ def main():
     if accelerator.is_main_process:
         logger.info(f"Dataset: {len(train_dataset)} train, {len(eval_dataset)} eval samples")
     
-    # Data collator for causal language modeling
     data_collator = CustomDataCollator(tokenizer)
     
-    # Create data loaders
     train_dataloader = DataLoader(
         train_dataset, 
         shuffle=True, 
         batch_size=args.batch_size, 
         collate_fn=data_collator,
+        num_workers=7,
+        pin_memory=True,
         drop_last=True
     )
     eval_dataloader = DataLoader(
         eval_dataset, 
         batch_size=args.batch_size, 
         collate_fn=data_collator,
+        num_workers=7,
+        pin_memory=True,
         drop_last=True
     )
     
@@ -291,13 +260,12 @@ def main():
         model.parameters(), 
         lr=args.learning_rate, 
         weight_decay=0.01,
-        eps=1e-8,  # Prevent division by zero
-        betas=(0.9, 0.999)  # Standard Adam betas
+        eps=1e-8,
+        betas=(0.9, 0.999)
     )
     
     num_training_steps = args.num_epochs * len(train_dataloader) // args.gradient_accumulation_steps
     
-    # Calculate warmup steps
     if args.warmup_ratio > 0:
         warmup_steps = int(args.warmup_ratio * num_training_steps)
     else:
@@ -313,7 +281,7 @@ def main():
         logger.info(f"Training: {num_training_steps} steps, {warmup_steps} warmup, LR={args.learning_rate}")
     
     # Wait for all processes before preparing
-    accelerator.wait_for_everyone()
+    # accelerator.wait_for_everyone()
     
     # Prepare everything with accelerator - with error handling
     try:
@@ -327,8 +295,8 @@ def main():
         raise
     
     # Initialize tracker
-    if accelerator.is_main_process:
-        accelerator.init_trackers("fsdp_training")
+    # if accelerator.is_main_process:
+    #     accelerator.init_trackers("fsdp_training")
     
     # Training loop
     total_steps = 0

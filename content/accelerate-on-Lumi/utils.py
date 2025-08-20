@@ -2,9 +2,7 @@ import os
 from datasets import DatasetDict, load_dataset, load_from_disk
 from datasets.builder import DatasetGenerationError
 
-def create_datasets(tokenizer, dataset_name, dataset_splits, training_args=None, apply_chat_template=False, verbose=False):
-    # Since we don't need chat template, remove the preprocess function
-    
+def create_datasets(tokenizer, dataset_name, dataset_splits, verbose=False):
     raw_datasets = DatasetDict()
     for split in dataset_splits.split(","):
         try:
