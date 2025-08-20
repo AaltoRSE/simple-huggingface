@@ -7,3 +7,4 @@ Simple HuggingFace
    setting-up
    inference
    training
+   accelerate
