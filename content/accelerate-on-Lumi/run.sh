@@ -98,10 +98,10 @@ export CMD="/workdir/main.py \
     --dataset_splits train,test \
     --batch_size 2 \
     --gradient_accumulation_steps 2 \
-    --learning_rate 2e-4 \
-    --num_epochs 100 \
+    --learning_rate 5e-5 \
+    --num_epochs 2 \
     --warmup_ratio 0.1 \
-    --max_length 2048 \
+    --max_length 1024 \
     --use_lora \
     --lora_r 16 \
     --lora_alpha 32 \
@@ -110,7 +110,7 @@ export CMD="/workdir/main.py \
     --logging_steps 25 \
     --save_steps 250 \
     --output_dir /workdir/outputs/llama2-7b-code-chat-lora \
-    --max_grad_norm 1.0"
+    --max_grad_norm 0.3"
 
 echo "Launching FSDP training with Accelerate..."
 echo "Master address: $MASTER_ADDR"

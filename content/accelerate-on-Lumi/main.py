@@ -1,14 +1,11 @@
 import os
 import torch
 import torch.distributed
-from datasets import load_dataset
 from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
-    DataCollatorForLanguageModeling,
     get_scheduler,
     get_linear_schedule_with_warmup,
-    BitsAndBytesConfig
 )
 from torch.optim import AdamW
 from torch.utils.data import DataLoader
@@ -25,25 +22,16 @@ from peft import LoraConfig, get_peft_model, TaskType
 from utils import create_datasets
 
 
+
 class CustomDataCollator:
-    """Custom data collator for causal language modeling"""
-    def __init__(self, tokenizer, pad_to_multiple_of=None):
+    def __init__(self, tokenizer):
         self.tokenizer = tokenizer
-        self.pad_to_multiple_of = pad_to_multiple_of
     
     def __call__(self, features):
-        # Extract input_ids and labels
         input_ids = [f["input_ids"] for f in features]
         labels = [f["labels"] for f in features]
-        
-        # Find the maximum length in the batch
         max_length = max(len(ids) for ids in input_ids)
         
-        # Apply pad_to_multiple_of if specified
-        if self.pad_to_multiple_of:
-            max_length = ((max_length + self.pad_to_multiple_of - 1) // self.pad_to_multiple_of) * self.pad_to_multiple_of
-        
-        # Pad input_ids and labels
         padded_input_ids = []
         padded_labels = []
         attention_masks = []
@@ -65,7 +53,7 @@ class CustomDataCollator:
         
         return {
             "input_ids": torch.tensor(padded_input_ids, dtype=torch.long),
-            "attention_mask": torch.tensor(attention_masks, dtype=torch.long),
+            "attention_mask": torch.tensor(attention_masks, dtype=torch.bool),
             "labels": torch.tensor(padded_labels, dtype=torch.long)
         }
 
@@ -110,7 +98,16 @@ def tokenize_function(examples, tokenizer, max_length):
     
     # For causal language modeling, labels are the same as input_ids
     # Make a proper copy of the input_ids for labels
-    tokenized["labels"] = tokenized["input_ids"].copy()
+    tokenized["labels"] = [ids.copy() for ids in tokenized["input_ids"]]
+    
+    # Filter out sequences that are too short (less than 10 tokens)
+    # This can help prevent training instability
+    valid_indices = [i for i, ids in enumerate(tokenized["input_ids"]) if len(ids) >= 10]
+    
+    if len(valid_indices) < len(tokenized["input_ids"]):
+        # Filter all fields to keep only valid sequences
+        for key in tokenized.keys():
+            tokenized[key] = [tokenized[key][i] for i in valid_indices]
     
     return tokenized
 
@@ -178,6 +175,7 @@ def main():
     tokenizer = AutoTokenizer.from_pretrained(args.model_name)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "right"
     
     # Minimal tokenizer info logging - only from main process
     if accelerator.is_main_process:
@@ -197,7 +195,11 @@ def main():
         torch_dtype=torch_dtype,
         device_map={"": "cpu"},  # Keep on CPU; accelerator.prepare will place/shard
         trust_remote_code=True,
+        attn_implementation="eager",
     )
+    
+    # Ensure no KV caching during training (important with checkpointing/FSDP)
+    model.config.use_cache = False
     
     # Setup LoRA if requested
     if args.use_lora:
@@ -207,8 +209,19 @@ def main():
             lora_alpha=args.lora_alpha,
             lora_dropout=args.lora_dropout,
             target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],  # Common for LLaMA
+            bias="none",  # Explicitly set bias handling
+            init_lora_weights=True,  # Ensure proper initialization
         )
         model = get_peft_model(model, lora_config)
+        
+        # Initialize LoRA weights properly to prevent NaN
+        for name, module in model.named_modules():
+            if hasattr(module, 'lora_A') and hasattr(module, 'lora_B'):
+                # Re-initialize LoRA weights with smaller values
+                if hasattr(module.lora_A, 'default'):
+                    torch.nn.init.normal_(module.lora_A.default.weight, std=0.01)
+                if hasattr(module.lora_B, 'default'):
+                    torch.nn.init.zeros_(module.lora_B.default.weight)
         
         if accelerator.is_main_process:
             # Get trainable parameters count without verbose output
@@ -256,23 +269,31 @@ def main():
         logger.info(f"Dataset: {len(train_dataset)} train, {len(eval_dataset)} eval samples")
     
     # Data collator for causal language modeling
-    data_collator = CustomDataCollator(tokenizer, pad_to_multiple_of=8)
+    data_collator = CustomDataCollator(tokenizer)
     
     # Create data loaders
     train_dataloader = DataLoader(
         train_dataset, 
         shuffle=True, 
         batch_size=args.batch_size, 
-        collate_fn=data_collator
+        collate_fn=data_collator,
+        drop_last=True
     )
     eval_dataloader = DataLoader(
         eval_dataset, 
         batch_size=args.batch_size, 
-        collate_fn=data_collator
+        collate_fn=data_collator,
+        drop_last=True
     )
     
     # Optimizer and scheduler
-    optimizer = AdamW(model.parameters(), lr=args.learning_rate, weight_decay=0.01)
+    optimizer = AdamW(
+        model.parameters(), 
+        lr=args.learning_rate, 
+        weight_decay=0.01,
+        eps=1e-8,  # Prevent division by zero
+        betas=(0.9, 0.999)  # Standard Adam betas
+    )
     
     num_training_steps = args.num_epochs * len(train_dataloader) // args.gradient_accumulation_steps
     
@@ -330,12 +351,27 @@ def main():
             with accelerator.accumulate(model):
                 outputs = model(**batch)
                 loss = outputs.loss
+                
+                # Check for NaN loss and skip if found
+                if torch.isnan(loss) or torch.isinf(loss):
+                    if accelerator.is_main_process:
+                        logger.warning(f"Skipping step {total_steps} due to NaN/Inf loss")
+                    continue
+                
                 total_loss += loss.detach().float()
                 
                 accelerator.backward(loss)
                 
                 if accelerator.sync_gradients:
-                    accelerator.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                    # Check for NaN gradients before clipping
+                    grad_norm = accelerator.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+                    
+                    # Skip step if gradient norm is NaN or too large
+                    if torch.isnan(grad_norm) or grad_norm > 100.0:
+                        if accelerator.is_main_process:
+                            logger.warning(f"Skipping step {total_steps} due to large gradient norm: {grad_norm}")
+                        optimizer.zero_grad()
+                        continue
                 
                 optimizer.step()
                 lr_scheduler.step()
