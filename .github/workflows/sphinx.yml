@@ -13,6 +13,10 @@ jobs:
     name: Build and gh-pages
     runs-on: ubuntu-latest
     steps:
+      # Disable apparmor
+      - name: Disable apparmor
+        run: |
+          sudo systemctl stop apparmor
       # https://github.com/marketplace/actions/checkout
       - uses: actions/checkout@v4
         with:
