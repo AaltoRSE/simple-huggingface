@@ -43,7 +43,7 @@ Submit your training job using the provided SLURM script:
 sbatch submit.sh
 ```
 
-## Project Structure
+## Files
 
 This directory contains the following key files:
 
@@ -51,6 +51,7 @@ This directory contains the following key files:
 - **`run.sh`** - Script to set up distributed environment on LUMI and launch training
 - **`main.py`** - Main entry point for model training
 - **`utils.py`** - Helper functions and utilities
+- **`fsdp_config.yaml`** - FSDP configuration for Hugging Face Accelerate
 
 ## Monitoring and Debugging
 
