@@ -1,12 +1,11 @@
 #!/bin/bash -e
 # Make sure GPUs are up
-echo "Rank $SLURM_PROCID - $(taskset -p $$) $ROCR_VISIBLE_DEVICES"
-# Make sure GPUs are up, this seems to sometimes be necessary on lumi... 
 if [ $SLURM_LOCALID -eq 0 ] ; then
     rocm-smi 
 fi
 sleep 2
 
+# MIOPEN needs some initialisation for the cache as the default location
 export MIOPEN_USER_DB_PATH="/tmp/$(whoami)-miopen-cache-$SLURM_NODEID"
 export MIOPEN_CUSTOM_CACHE_DIR=$MIOPEN_USER_DB_PATH
 
@@ -16,9 +15,6 @@ if [ $SLURM_LOCALID -eq 0 ] ; then
     mkdir -p $MIOPEN_USER_DB_PATH
 fi
 sleep 2
-
-# Report affinity
-echo "Rank $SLURM_PROCID --> $(taskset -p $$)"
 
 # ROCm/HIP environment setup
 export ROCR_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
@@ -45,6 +41,9 @@ unset CUDA_LAUNCH_BLOCKING
 unset HIP_LAUNCH_BLOCKING
 
 export LOGLEVEL=INFO
+
+# Report affinity to check
+echo "Rank $SLURM_PROCID --> $(taskset -p $$); GPU $ROCR_VISIBLE_DEVICES"
 
 # Set environment for the app
 # Get the master node address from SLURM_NODELIST

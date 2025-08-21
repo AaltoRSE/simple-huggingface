@@ -19,23 +19,18 @@ module load PyTorch/2.6.0-rocm-6.2.4-python-3.12-singularity-20250404
 
 export SINGULARITYENV_NCCL_DEBUG=INFO
 
-Nodes=$SLURM_NNODES
-c=fe
-export MYMASKS="0x${c}000000000000,0x${c}00000000000000,0x${c}0000,0x${c}000000,0x${c},0x${c}00,0x${c}00000000,0x${c}0000000000"
-
 cd $wd
 
 echo "Starting FSDP training job with:"
-echo "  Nodes: $Nodes"
-echo "  GPUs per node: $SLURM_GPUS_PER_NODE"
-echo "  Working directory: $wd"
+echo "Num of nodes: $SLURM_NNODES"
+echo "GPUs per node: $SLURM_GPUS_PER_NODE"
+echo "Working directory: $wd"
 
 srun --jobid $SLURM_JOBID\
-     -N $((Nodes)) \
-     -n $((Nodes)) \
-     -c $((8*7)) \
-    --cpu-bind=mask_cpu:$MYMASKS \
-    --gpus $(($Nodes*8)) \
-    singularity exec \
-        -B "$wd:/workdir" \
+     --nodes $SLURM_NNODES \
+     --ntasks $SLURM_NNODES \
+     --cpus-per-task $((8*7)) \
+     --gpus-per-task 8 \
+     singularity exec \
+        --bind "$wd:/workdir" \
         $SIFPYTORCH /workdir/run.sh
