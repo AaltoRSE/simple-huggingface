@@ -27,7 +27,7 @@ export RCCL_ENABLE_P2P=1
 export NCCL_P2P_DISABLE=1
 export NCCL_IB_DISABLE=1
 
-# Set NCCL timeout and debugging variables - INCREASED TIMEOUT
+# Set NCCL timeout and debugging variables 
 export NCCL_TIMEOUT=1800 
 export TORCH_NCCL_ASYNC_ERROR_HANDLING=1
 export TORCH_NCCL_BLOCKING_WAIT=1
@@ -38,7 +38,6 @@ export NCCL_SOCKET_IFNAME=hsn0,hsn1,hsn2,hsn3
 
 # Remove CUDA-specific variables that can cause issues with ROCm
 unset CUDA_LAUNCH_BLOCKING
-unset HIP_LAUNCH_BLOCKING
 
 export LOGLEVEL=INFO
 
