@@ -1,0 +1,208 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Setting up Hugging Face &mdash; Simple HuggingFace  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=949a1ff5" />
+      <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_lesson.css?v=e9df6548" />
+      <link rel="stylesheet" type="text/css" href="../_static/term_role_formatting.css?v=4194e21c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_rtd_theme_ext_color_contrast.css?v=8e8ea19f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=187304be"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=b3c80e7a"></script>
+      <script src="../_static/minipres.js?v=a0d29692"></script>
+      <script>let toggleHintShow = 'Click to show';</script>
+      <script>let toggleHintHide = 'Click to hide';</script>
+      <script>let toggleOpenOnPrint = 'true';</script>
+      <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="next" title="Model inference with Hugging Face" href="../inference/" />
+    <link rel="prev" title="Simple HuggingFace" href="../" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../" class="icon icon-home">
+            Simple HuggingFace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Setting up Hugging Face</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hugging-face-packages">Hugging Face packages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#transformers">Transformers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#datasets">Datasets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#accelerate">Accelerate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#hugging-face-hub-client">Hugging Face Hub Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-libraries">Other libraries</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#logging-into-hugging-face-hub">Logging into Hugging Face hub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#environment-variables-and-storage-locations">Environment variables and storage locations</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/">Model inference with Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../training/">Model training with Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accelerate/">Multi-GPU training with Accelerate</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../">Simple HuggingFace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Setting up Hugging Face</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/aaltorse/simple-huggingface/blob/main/content/setting-up.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="setting-up-hugging-face">
+<h1>Setting up Hugging Face<a class="headerlink" href="#setting-up-hugging-face" title="Link to this heading"></a></h1>
+<section id="hugging-face-packages">
+<h2>Hugging Face packages<a class="headerlink" href="#hugging-face-packages" title="Link to this heading"></a></h2>
+<p>Hugging Face ecosystem is spread across multiple packages that provide different functionalities. We’ll go through some of the major ones.</p>
+<section id="transformers">
+<h3>Transformers<a class="headerlink" href="#transformers" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://huggingface.co/docs/transformers/index">Transformers</a> is a core package of Hugging Face that defines what Hugging Face models and pipelines are. It makes it possible to run inference on models from <a class="reference external" href="https://huggingface.co/models">Hugging Face model hub</a></p>
+<p>The name of the library is <code class="docutils literal notranslate"><span class="pre">transformers</span></code> in conda-forge and in PyPi.</p>
+</section>
+<section id="datasets">
+<h3>Datasets<a class="headerlink" href="#datasets" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://huggingface.co/docs/datasets/index">Datasets</a> is a library for downloading, using and sharing datasets in <a class="reference external" href="https://huggingface.co/datasets">Hugging Face datasets hub</a>.</p>
+<p>The name of the library is <code class="docutils literal notranslate"><span class="pre">datasets</span></code> in conda-forge and in PyPi.</p>
+</section>
+<section id="accelerate">
+<h3>Accelerate<a class="headerlink" href="#accelerate" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://huggingface.co/docs/accelerate/index">Accelerate</a> is a library for doing model training with PyTorch. It supports distributed training as well.</p>
+<p>The name of the library is <code class="docutils literal notranslate"><span class="pre">accelerate</span></code> in conda-forge and in PyPi.</p>
+</section>
+<section id="hugging-face-hub-client">
+<h3>Hugging Face Hub Client<a class="headerlink" href="#hugging-face-hub-client" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://huggingface.co/docs/huggingface_hub/index">Hugging Face Hub client library</a> allows you to interact with the Hugging Face hub. Datasets and Transformers use it to download datasets and models from the Hugging Face hub. There is also a command line interface (CLI) that you can use to login to Hugging Face hub and to download models manually.</p>
+<p>The name of the library is <code class="docutils literal notranslate"><span class="pre">huggingface_hub</span></code> in conda-forge and in PyPi. If you want the command line client when installing from PyPi use <code class="docutils literal notranslate"><span class="pre">huggingface_hub[cli]</span></code>.</p>
+</section>
+<section id="other-libraries">
+<h3>Other libraries<a class="headerlink" href="#other-libraries" title="Link to this heading"></a></h3>
+<p>In these demos we also use:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">sentencepiece</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bitsandbytes</span></code></p></li>
+</ul>
+</section>
+</section>
+<section id="logging-into-hugging-face-hub">
+<h2>Logging into Hugging Face hub<a class="headerlink" href="#logging-into-hugging-face-hub" title="Link to this heading"></a></h2>
+<p>If you have created an account in Hugging Face hub you can login with <code class="docutils literal notranslate"><span class="pre">hf</span></code>, which is the Hugging Face command line interface (in older versions this was <a class="reference external" href="https://huggingface.co/blog/hf-cli">huggingface-cli</a>).</p>
+<p>Run this in a command line:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>hf<span class="w"> </span>auth<span class="w"> </span>login
+</pre></div>
+</div>
+<p>If you do not have a token created, go to <a class="reference external" href="https://huggingface.co/settings/tokens">Settings &gt; Access Tokens</a> and create one. Its good idea to have individual tokens for different systems so you can revoke them if necessary.</p>
+</section>
+<section id="environment-variables-and-storage-locations">
+<h2>Environment variables and storage locations<a class="headerlink" href="#environment-variables-and-storage-locations" title="Link to this heading"></a></h2>
+<p>Hugging Face uses many environment variables (more detailed list is <a class="reference external" href="https://huggingface.co/docs/huggingface_hub/en/package_reference/environment_variables">here</a>) to determine where it should store various files.</p>
+<p>By default, Hugging Face client library will store everything under <code class="docutils literal notranslate"><span class="pre">HF_HOME</span></code>, which is <code class="docutils literal notranslate"><span class="pre">~/.cache/huggingface</span></code> in Linux systems.</p>
+<p>Stored data includes:</p>
+<ul class="simple">
+<li><p>Authentication tokens</p></li>
+<li><p>Downloaded datasets</p></li>
+<li><p>Downloaded models</p></li>
+</ul>
+<p>In many systems you do not want to use this default location. In high-performance clusters you’ll most likely want to use some storage location reserved for your project for the large datasets.</p>
+<p>Some of the most common environment variables to move things around are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">HF_HOME</span></code> - Default location for storing everything related to Hugging Face hub.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HF_HUB_CACHE</span></code> - Location where cached models and datasets are downloaded. Defaults to <code class="docutils literal notranslate"><span class="pre">$HF_HOME/hub</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">HF_TOKEN</span></code> - Location where your Hugging Face hub token is stored. Defaults to <code class="docutils literal notranslate"><span class="pre">$HF_HOME/token</span></code>.</p></li>
+</ul>
+<p>Usually you’ll want to set these in your submission scripts, but if you’re using notebooks, you might want to use notebooks cells like these before importing Hugging Face libraries.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="c1"># Here environment variable WRKDIR points to a personal work directory</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;WRKDIR&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">/huggingface&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_TOKEN&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;~/.cache/huggingface/token&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../" class="btn btn-neutral float-left" title="Simple HuggingFace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../inference/" class="btn btn-neutral float-right" title="Model inference with Hugging Face" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-, The contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

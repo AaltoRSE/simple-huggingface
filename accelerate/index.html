@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Multi-GPU training with Accelerate &mdash; Simple HuggingFace  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=949a1ff5" />
+      <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_lesson.css?v=e9df6548" />
+      <link rel="stylesheet" type="text/css" href="../_static/term_role_formatting.css?v=4194e21c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_rtd_theme_ext_color_contrast.css?v=8e8ea19f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=187304be"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=b3c80e7a"></script>
+      <script src="../_static/minipres.js?v=a0d29692"></script>
+      <script>let toggleHintShow = 'Click to show';</script>
+      <script>let toggleHintHide = 'Click to hide';</script>
+      <script>let toggleOpenOnPrint = 'true';</script>
+      <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="prev" title="Model training with Hugging Face" href="../training/" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../" class="icon icon-home">
+            Simple HuggingFace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../setting-up/">Setting up Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/">Model inference with Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../training/">Model training with Hugging Face</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Multi-GPU training with Accelerate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#what-is-accelerate">What is Accelerate?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuring-accelerate">Configuring Accelerate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-trainer-with-accelerate">Using Trainer with Accelerate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#using-accelerate-with-pytorch-code">Using Accelerate with PyTorch code</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../">Simple HuggingFace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Multi-GPU training with Accelerate</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/aaltorse/simple-huggingface/blob/main/content/accelerate.rst" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="multi-gpu-training-with-accelerate">
+<h1>Multi-GPU training with Accelerate<a class="headerlink" href="#multi-gpu-training-with-accelerate" title="Link to this heading"></a></h1>
+<section id="what-is-accelerate">
+<h2>What is Accelerate?<a class="headerlink" href="#what-is-accelerate" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://huggingface.co/docs/accelerate/index">Accelerate</a> is a library
+designed to simplify multi-GPU training of PyTorch models.</p>
+<p>It supports many different parallelization strategies like
+Distributed Data Parallel (DDP), Fully Sharded Data Parallel (FSDP) and
+DeepSpeed.</p>
+<p>The main selling point of the library is that it can handle things like
+model placement, dataloader division and gradient accumulation
+across multiple GPUs on multiple machines with minimal configuration.</p>
+<p>There are huge number of advanced features included in Accelerate so
+here we’ll focus on two aspects: how Accelerate works when training a
+model with Hugging Face Trainer and how Accelerate works when you
+have an existing PyTorch training loop that you want to convert to use
+multi-GPU training.</p>
+</section>
+<section id="configuring-accelerate">
+<h2>Configuring Accelerate<a class="headerlink" href="#configuring-accelerate" title="Link to this heading"></a></h2>
+<p>Accelerate is configured using a <code class="docutils literal notranslate"><span class="pre">yaml</span></code>-file that sets everything
+from model distribution strategy to networking settings.</p>
+<p>Typical configuration file might looks something like this
+(<a class="reference download internal" download="" href="../_downloads/7648d8b42e63a3b8514549a4e4010423/accelerate_config.yaml"><code class="xref download docutils literal notranslate"><span class="pre">accelerate_config.yaml</span></code></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Accelerate configuration for multi-GPU distributed training</span>
+<span class="n">compute_environment</span><span class="p">:</span> <span class="n">LOCAL_MACHINE</span>
+<span class="n">distributed_type</span><span class="p">:</span> <span class="n">MULTI_GPU</span>
+<span class="n">mixed_precision</span><span class="p">:</span> <span class="n">bf16</span>
+<span class="n">num_machines</span><span class="p">:</span> <span class="mi">1</span>
+<span class="n">num_processes</span><span class="p">:</span> <span class="mi">8</span>
+<span class="n">rdzv_backend</span><span class="p">:</span> <span class="n">static</span>
+<span class="n">same_network</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">use_cpu</span><span class="p">:</span> <span class="n">false</span>
+</pre></div>
+</div>
+<p>Easiest way of creating this configuration file is to run
+<a class="reference external" href="https://huggingface.co/docs/accelerate/package_reference/cli#accelerate-config">accelerate config</a>
+that launches series of prompts about your desired parallelization strategy.</p>
+<p>The main command used to launch Accelerate codes, <code class="docutils literal notranslate"><span class="pre">accelerate</span> <span class="pre">launch</span></code>,
+has <a class="reference external" href="https://huggingface.co/docs/accelerate/package_reference/cli#accelerate-launch">a huge number</a>
+of different arguments that can be set. All of the arguments can be
+set in the configuration file, but they can also be given via command line.</p>
+</section>
+<section id="using-trainer-with-accelerate">
+<h2>Using Trainer with Accelerate<a class="headerlink" href="#using-trainer-with-accelerate" title="Link to this heading"></a></h2>
+<p>Trainer has been designed to utilize Accelerate automatically.</p>
+<p>Let’s consider the following training code
+(<a class="reference download internal" download="" href="../_downloads/863b9b27a8852f9371ccb0980e80c09e/trainer_mnist_cnn.py"><code class="xref download docutils literal notranslate"><span class="pre">trainer_mnist_cnn.py</span></code></a>) that trains a simple
+CNN model based on the MNIST dataset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToTensor</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Trainer</span><span class="p">,</span> <span class="n">TrainingArguments</span>
+
+<span class="c1"># Describe model</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleCNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="mi">13</span><span class="o">*</span><span class="mi">13</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    main function that does the training</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">data_dir</span> <span class="o">=</span> <span class="s1">&#39;./data&#39;</span>
+
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SimpleCNN</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">collator_fn</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;images&quot;</span><span class="p">:</span><span class="n">images</span><span class="p">,</span> <span class="s2">&quot;labels&quot;</span><span class="p">:</span><span class="n">labels</span><span class="p">}</span>
+
+
+    <span class="k">class</span><span class="w"> </span><span class="nc">MNISTTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">compute_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">return_outputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_items_in_batch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="n">images</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;images&#39;</span><span class="p">)</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+            <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_outputs</span> <span class="k">else</span> <span class="n">loss</span>
+
+
+    <span class="n">trainer_args</span> <span class="o">=</span> <span class="n">TrainingArguments</span><span class="p">(</span>
+        <span class="n">report_to</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">eval_strategy</span><span class="o">=</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span>
+        <span class="n">logging_steps</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">MNISTTrainer</span><span class="p">(</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">trainer_args</span><span class="p">,</span>
+        <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+        <span class="n">eval_dataset</span><span class="o">=</span><span class="n">test_dataset</span><span class="p">,</span>
+        <span class="n">data_collator</span><span class="o">=</span><span class="n">collator_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+    
+    <span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This code can be launched on a single GPU with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>trainer_mnist_cnn.py
+</pre></div>
+</div>
+<p>Converting code that uses <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> to multi-GPU code is quite trivial,
+as <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> has been designed to work together with Accelerate.</p>
+<p>When launched with a configuration file like the one given above, Accelerate
+would try to do a DDP setup (<code class="docutils literal notranslate"><span class="pre">distributed_type:</span> <span class="pre">MULTI_GPU</span></code>) with 8
+GPUs (<code class="docutils literal notranslate"><span class="pre">num_processes:</span> <span class="pre">8</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>launch<span class="w"> </span>--config_file<span class="w"> </span>accelerate_config.yaml<span class="w"> </span>trainer_mnist_cnn.py
+</pre></div>
+</div>
+<p>In this case the model and data are both so small, that there would not be any benefits
+on using multiple GPUs.</p>
+<p><a class="reference download internal" download="" href="../_downloads/b585add8e90be32e95c76f77935c7b01/trainer_imdb_finetune.py"><code class="xref download docutils literal notranslate"><span class="pre">This</span> <span class="pre">more</span> <span class="pre">complex</span> <span class="pre">model</span></code></a> that
+fine-tunes a language model for sentiment classification can already see some benefits
+from multi-GPU training.</p>
+</section>
+<section id="using-accelerate-with-pytorch-code">
+<h2>Using Accelerate with PyTorch code<a class="headerlink" href="#using-accelerate-with-pytorch-code" title="Link to this heading"></a></h2>
+<p>Let’s consider the following training code that again trains a simple CNN model
+on MNIST dataset, but this time has a training loop closer to regular PyTorch
+(<a class="reference download internal" download="" href="../_downloads/1e091a0fb59af486f48d102973fe5414/pytorch_mnist_cnn.py"><code class="xref download docutils literal notranslate"><span class="pre">trainer_mnist_cnn.py</span></code></a>)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_linear_schedule_with_warmup</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToTensor</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Describe model</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleCNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="mi">13</span><span class="o">*</span><span class="mi">13</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    main function that does the training</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">data_dir</span> <span class="o">=</span> <span class="s1">&#39;./data&#39;</span>
+
+    <span class="n">n_epochs</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="c1"># Set up logging</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> - </span><span class="si">%(levelname)s</span><span class="s2"> - </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">,</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+    <span class="c1"># Define data sets and data loaders</span>
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+    <span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+    <span class="n">test_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+    
+    <span class="c1"># Define loss function</span>
+    <span class="n">loss_function</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+
+    <span class="c1"># Define model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SimpleCNN</span><span class="p">()</span>
+
+    <span class="c1"># Define optimizer</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+
+    <span class="n">num_training_steps</span> <span class="o">=</span> <span class="n">n_epochs</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">)</span>
+
+    <span class="c1"># Define learning rate scheduler</span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">get_linear_schedule_with_warmup</span><span class="p">(</span>
+        <span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">num_warmup_steps</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">num_training_steps</span> <span class="o">//</span> <span class="mi">10</span><span class="p">),</span>  <span class="c1"># 10% warmup</span>
+        <span class="n">num_training_steps</span><span class="o">=</span><span class="n">num_training_steps</span>
+    <span class="p">)</span>
+    
+    <span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span>
+    
+    <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+    <span class="n">total_steps</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+
+        <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">epoch_steps</span> <span class="o">=</span> <span class="mi">0</span>
+        
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            
+            <span class="n">total_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">epoch_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">epoch_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Enhanced logging</span>
+            <span class="k">if</span> <span class="n">total_steps</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+                <span class="n">avg_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span> <span class="o">/</span> <span class="n">epoch_steps</span>
+                <span class="n">current_lr</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_last_lr</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">steps_per_sec</span> <span class="o">=</span> <span class="n">total_steps</span> <span class="o">/</span> <span class="n">elapsed_time</span>
+                
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">total_steps</span><span class="si">}</span><span class="s2"> | Loss: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Avg Loss: </span><span class="si">{</span><span class="n">avg_loss</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | LR: </span><span class="si">{</span><span class="n">current_lr</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> | &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Steps/sec: </span><span class="si">{</span><span class="n">steps_per_sec</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This can be converted to use Accelerate with minor changes to the original code
+(<a class="reference download internal" download="" href="../_downloads/7e00675d998ce7ec7314a1be882d3b9f/accelerate_mnist_cnn.py"><code class="xref download docutils literal notranslate"><span class="pre">trainer_mnist_cnn.py</span></code></a>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_linear_schedule_with_warmup</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToTensor</span>
+
+<span class="hll"><span class="kn">from</span><span class="w"> </span><span class="nn">accelerate</span><span class="w"> </span><span class="kn">import</span> <span class="n">Accelerator</span>
+</span><span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+
+<span class="c1"># Describe model</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleCNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="mi">13</span><span class="o">*</span><span class="mi">13</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    main function that does the training</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="n">data_dir</span> <span class="o">=</span> <span class="s1">&#39;./data&#39;</span>
+
+    <span class="n">n_epochs</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+
+    <span class="c1"># Set up logging</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span>
+        <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(asctime)s</span><span class="s2"> - </span><span class="si">%(levelname)s</span><span class="s2"> - </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">datefmt</span><span class="o">=</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">,</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+    <span class="c1"># Define data sets and data loaders</span>
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+    <span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+    <span class="n">test_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+    
+    <span class="c1"># Define loss function</span>
+    <span class="n">loss_function</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+
+    <span class="c1"># Define model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">SimpleCNN</span><span class="p">()</span>
+
+    <span class="c1"># Define optimizer</span>
+    <span class="n">optimizer</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">AdamW</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">())</span>
+
+    <span class="n">num_training_steps</span> <span class="o">=</span> <span class="n">n_epochs</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">)</span>
+
+    <span class="c1"># Define learning rate scheduler</span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">get_linear_schedule_with_warmup</span><span class="p">(</span>
+        <span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">num_warmup_steps</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="n">num_training_steps</span> <span class="o">//</span> <span class="mi">10</span><span class="p">),</span>  <span class="c1"># 10% warmup</span>
+        <span class="n">num_training_steps</span><span class="o">=</span><span class="n">num_training_steps</span>
+    <span class="p">)</span>
+    
+<span class="hll">    <span class="n">accelerator</span> <span class="o">=</span> <span class="n">Accelerator</span><span class="p">()</span>
+</span><span class="hll">
+</span><span class="hll">    <span class="n">device</span> <span class="o">=</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">device</span>
+</span><span class="hll">    
+</span><span class="hll">    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">scheduler</span> <span class="o">=</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+</span><span class="hll">        <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">scheduler</span>
+</span><span class="hll">    <span class="p">)</span>
+</span>    
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+
+    <span class="n">total_steps</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+
+        <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">epoch_steps</span> <span class="o">=</span> <span class="mi">0</span>
+        
+<span class="hll">        <span class="k">if</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">is_main_process</span><span class="p">:</span>
+</span>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting epoch </span><span class="si">{</span><span class="n">epoch</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_epochs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+<span class="hll">            <span class="n">accelerator</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+</span>            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            
+            <span class="n">total_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">epoch_loss</span> <span class="o">+=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">epoch_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Enhanced logging</span>
+<span class="hll">            <span class="k">if</span> <span class="n">total_steps</span> <span class="o">%</span> <span class="mi">100</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">is_main_process</span><span class="p">:</span>
+</span>                <span class="n">elapsed_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span>
+                <span class="n">avg_loss</span> <span class="o">=</span> <span class="n">epoch_loss</span> <span class="o">/</span> <span class="n">epoch_steps</span>
+                <span class="n">current_lr</span> <span class="o">=</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">get_last_lr</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">steps_per_sec</span> <span class="o">=</span> <span class="n">total_steps</span> <span class="o">/</span> <span class="n">elapsed_time</span>
+                
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Step </span><span class="si">{</span><span class="n">total_steps</span><span class="si">}</span><span class="s2"> | Loss: </span><span class="si">{</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Avg Loss: </span><span class="si">{</span><span class="n">avg_loss</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | LR: </span><span class="si">{</span><span class="n">current_lr</span><span class="si">:</span><span class="s2">.2e</span><span class="si">}</span><span class="s2"> | &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Steps/sec: </span><span class="si">{</span><span class="n">steps_per_sec</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                
+<span class="hll">    <span class="n">accelerator</span><span class="o">.</span><span class="n">end_training</span><span class="p">()</span>
+</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+    <span class="c1">#torch.distributed.destroy_process_group()</span>
+</pre></div>
+</div>
+<p>Main modifications are are setting up the
+<a class="reference external" href="huggingface.co/docs/accelerate/package_reference/accelerator">Accelerator</a>,
+letting the Accelerate handle the model placement</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">accelerator</span> <span class="o">=</span> <span class="n">Accelerator</span><span class="p">()</span>
+
+    <span class="n">device</span> <span class="o">=</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">device</span>
+    
+    <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">scheduler</span> <span class="o">=</span> <span class="n">accelerator</span><span class="o">.</span><span class="n">prepare</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">scheduler</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>and making certain that loss is propagated across all distributed
+models:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>        <span class="k">for</span> <span class="n">step</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">inputs</span><span class="p">,</span> <span class="n">targets</span> <span class="o">=</span> <span class="n">batch</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="n">loss_function</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">targets</span><span class="p">)</span>
+<span class="hll">            <span class="n">accelerator</span><span class="o">.</span><span class="n">backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+</span>            <span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Now this training loop can be launched in the same way as the <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> one
+and it will utilize multiple GPUs:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>launch<span class="w"> </span>--config_file<span class="w"> </span>accelerate_config.yaml<span class="w"> </span>accelerate_mnist_cnn.py
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../training/" class="btn btn-neutral float-left" title="Model training with Hugging Face" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-, The contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

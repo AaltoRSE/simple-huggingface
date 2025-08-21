@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model training with Hugging Face &mdash; Simple HuggingFace  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=949a1ff5" />
+      <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_lesson.css?v=e9df6548" />
+      <link rel="stylesheet" type="text/css" href="../_static/term_role_formatting.css?v=4194e21c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_rtd_theme_ext_color_contrast.css?v=8e8ea19f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=187304be"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=b3c80e7a"></script>
+      <script src="../_static/minipres.js?v=a0d29692"></script>
+      <script>let toggleHintShow = 'Click to show';</script>
+      <script>let toggleHintHide = 'Click to hide';</script>
+      <script>let toggleOpenOnPrint = 'true';</script>
+      <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="next" title="Multi-GPU training with Accelerate" href="../accelerate/" />
+    <link rel="prev" title="Model inference with Hugging Face" href="../inference/" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../" class="icon icon-home">
+            Simple HuggingFace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../setting-up/">Setting up Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../inference/">Model inference with Hugging Face</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model training with Hugging Face</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model-setup">Model setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-loading-and-trainer-setup">Data loading and Trainer setup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#checking-model-results">Checking model results</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#customizing-trainer-with-trainingarguments">Customizing Trainer with TrainingArguments</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../accelerate/">Multi-GPU training with Accelerate</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../">Simple HuggingFace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Model training with Hugging Face</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/aaltorse/simple-huggingface/blob/main/content/training.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="model-training-with-hugging-face">
+<h1>Model training with Hugging Face<a class="headerlink" href="#model-training-with-hugging-face" title="Link to this heading"></a></h1>
+<section id="model-setup">
+<h2>Model setup<a class="headerlink" href="#model-setup" title="Link to this heading"></a></h2>
+<p>Let’s consider a simple CNN model that trains on MNIST dataset to predict handwritten digits.</p>
+<p>The example model is similar to the one shown in the <a class="reference external" href="https://github.com/csc-training/intro-to-dl/blob/master/day1/README.md#exercise-3">intro-to-dl</a>-course.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="c1"># Here environment variable WRKDIR points to a personal work directory</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;WRKDIR&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">/huggingface&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_TOKEN_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;~/.cache/huggingface/token&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">transformers</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="kn">import</span> <span class="n">ToTensor</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Let’s define the data loaders for the model:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">data_dir</span> <span class="o">=</span> <span class="s1">&#39;./data&#39;</span>
+
+<span class="n">batch_size</span> <span class="o">=</span> <span class="mi">32</span>
+
+<span class="n">train_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">download</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+<span class="n">test_dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">MNIST</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">train</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">transform</span><span class="o">=</span><span class="n">ToTensor</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Let’s define the model architecture:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span>
+
+<span class="n">device</span> <span class="o">=</span> <span class="s1">&#39;cuda&#39;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s1">&#39;cpu&#39;</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">SimpleCNN</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;valid&#39;</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">MaxPool2d</span><span class="p">(</span><span class="n">kernel_size</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Flatten</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">32</span><span class="o">*</span><span class="mi">13</span><span class="o">*</span><span class="mi">13</span><span class="p">,</span> <span class="mi">128</span><span class="p">),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">ReLU</span><span class="p">(),</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">SimpleCNN</span><span class="p">()</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SimpleCNN(
+  (layers): Sequential(
+    (0): Conv2d(1, 32, kernel_size=(3, 3), stride=(1, 1), padding=valid)
+    (1): ReLU()
+    (2): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (3): Flatten(start_dim=1, end_dim=-1)
+    (4): Linear(in_features=5408, out_features=128, bias=True)
+    (5): ReLU()
+    (6): Linear(in_features=128, out_features=10, bias=True)
+  )
+)
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="data-loading-and-trainer-setup">
+<h2>Data loading and Trainer setup<a class="headerlink" href="#data-loading-and-trainer-setup" title="Link to this heading"></a></h2>
+<p>Now we could write our own training loop that would train the model, but we can also use Hugging Face <a class="reference external" href="https://huggingface.co/docs/transformers/main/trainer">Trainer</a>.</p>
+<p>Given a model and the datasets we want to use, Trainer will automatically handle the model training.</p>
+<p>Trainer will automatically create DataLoaders for the datasets that we have, but depending on the data you might need to specify a <a class="reference external" href="https://huggingface.co/docs/transformers/main_classes/data_collator">data collator</a> that combines individual data instances into batches.</p>
+<p>Because the data coming from Torchvision datasets contains a tuple of an image tensor and corresponding label, we can combine the data into batches with the following collator function:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">collator_fn</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">])</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;images&quot;</span><span class="p">:</span><span class="n">images</span><span class="p">,</span> <span class="s2">&quot;labels&quot;</span><span class="p">:</span><span class="n">labels</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>To train the model we need to specify the loss function that we optimize. This is usually achieved by <a class="reference external" href="https://huggingface.co/docs/transformers/main/trainer#customize">extending the Trainer-class</a>.</p>
+<p>Our new <code class="docutils literal notranslate"><span class="pre">MNISTTrainer</span></code> specifies the loss calculation in the <code class="docutils literal notranslate"><span class="pre">compute_loss</span></code>-function:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">Trainer</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MNISTTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">return_outputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">num_items_in_batch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">images</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;images&#39;</span><span class="p">)</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;labels&#39;</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+        <span class="n">criterion</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">()</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">criterion</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_outputs</span> <span class="k">else</span> <span class="n">loss</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">MNISTTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+    <span class="n">eval_dataset</span><span class="o">=</span><span class="n">test_dataset</span><span class="p">,</span>
+    <span class="n">data_collator</span><span class="o">=</span><span class="n">collator_fn</span><span class="p">,</span>
+<span class="p">)</span>
+    
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now that we have the Trainer specified, we can train the model:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html">
+    <div>
+      
+      <progress value='22500' max='22500' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      [22500/22500 00:43, Epoch 3/3]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+ <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>500</td>
+      <td>1.627500</td>
+    </tr>
+    <tr>
+      <td>1000</td>
+      <td>0.758000</td>
+    </tr>
+    <tr>
+      <td>1500</td>
+      <td>0.490400</td>
+    </tr>
+    <tr>
+      <td>2000</td>
+      <td>0.393400</td>
+    </tr>
+    <tr>
+      <td>2500</td>
+      <td>0.359800</td>
+    </tr>
+    <tr>
+      <td>3000</td>
+      <td>0.346300</td>
+    </tr>
+    <tr>
+      <td>3500</td>
+      <td>0.312300</td>
+    </tr>
+    <tr>
+      <td>4000</td>
+      <td>0.331600</td>
+    </tr>
+    <tr>
+      <td>4500</td>
+      <td>0.313500</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>0.292200</td>
+    </tr>
+    <tr>
+      <td>5500</td>
+      <td>0.315700</td>
+    </tr>
+    <tr>
+      <td>6000</td>
+      <td>0.273300</td>
+    </tr>
+    <tr>
+      <td>6500</td>
+      <td>0.301700</td>
+    </tr>
+    <tr>
+      <td>7000</td>
+      <td>0.285800</td>
+    </tr>
+    <tr>
+      <td>7500</td>
+      <td>0.276600</td>
+    </tr>
+    <tr>
+      <td>8000</td>
+      <td>0.270300</td>
+    </tr>
+    <tr>
+      <td>8500</td>
+      <td>0.260600</td>
+    </tr>
+    <tr>
+      <td>9000</td>
+      <td>0.250300</td>
+    </tr>
+    <tr>
+      <td>9500</td>
+      <td>0.260000</td>
+    </tr>
+    <tr>
+      <td>10000</td>
+      <td>0.245300</td>
+    </tr>
+    <tr>
+      <td>10500</td>
+      <td>0.262400</td>
+    </tr>
+    <tr>
+      <td>11000</td>
+      <td>0.247400</td>
+    </tr>
+    <tr>
+      <td>11500</td>
+      <td>0.237900</td>
+    </tr>
+    <tr>
+      <td>12000</td>
+      <td>0.240100</td>
+    </tr>
+    <tr>
+      <td>12500</td>
+      <td>0.210700</td>
+    </tr>
+    <tr>
+      <td>13000</td>
+      <td>0.251200</td>
+    </tr>
+    <tr>
+      <td>13500</td>
+      <td>0.223500</td>
+    </tr>
+    <tr>
+      <td>14000</td>
+      <td>0.233500</td>
+    </tr>
+    <tr>
+      <td>14500</td>
+      <td>0.235600</td>
+    </tr>
+    <tr>
+      <td>15000</td>
+      <td>0.229100</td>
+    </tr>
+    <tr>
+      <td>15500</td>
+      <td>0.230500</td>
+    </tr>
+    <tr>
+      <td>16000</td>
+      <td>0.243400</td>
+    </tr>
+    <tr>
+      <td>16500</td>
+      <td>0.207800</td>
+    </tr>
+    <tr>
+      <td>17000</td>
+      <td>0.211100</td>
+    </tr>
+    <tr>
+      <td>17500</td>
+      <td>0.206400</td>
+    </tr>
+    <tr>
+      <td>18000</td>
+      <td>0.221400</td>
+    </tr>
+    <tr>
+      <td>18500</td>
+      <td>0.197000</td>
+    </tr>
+    <tr>
+      <td>19000</td>
+      <td>0.216900</td>
+    </tr>
+    <tr>
+      <td>19500</td>
+      <td>0.216900</td>
+    </tr>
+    <tr>
+      <td>20000</td>
+      <td>0.213000</td>
+    </tr>
+    <tr>
+      <td>20500</td>
+      <td>0.216000</td>
+    </tr>
+    <tr>
+      <td>21000</td>
+      <td>0.215500</td>
+    </tr>
+    <tr>
+      <td>21500</td>
+      <td>0.199600</td>
+    </tr>
+    <tr>
+      <td>22000</td>
+      <td>0.202100</td>
+    </tr>
+    <tr>
+      <td>22500</td>
+      <td>0.228600</td>
+    </tr>
+  </tbody>
+</table><p></div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>TrainOutput(global_step=22500, training_loss=0.30138072950575084, metrics={&#39;train_runtime&#39;: 43.9328, &#39;train_samples_per_second&#39;: 4097.163, &#39;train_steps_per_second&#39;: 512.145, &#39;total_flos&#39;: 0.0, &#39;train_loss&#39;: 0.30138072950575084, &#39;epoch&#39;: 3.0})
+</pre></div>
+</div>
+</div>
+</div>
+<p>We can test out predictions of the model by running some data through the model:</p>
+</section>
+<section id="checking-model-results">
+<h2>Checking model results<a class="headerlink" href="#checking-model-results" title="Link to this heading"></a></h2>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%</span><span class="k">matplotlib</span> inline
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+
+<span class="n">example_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">32</span><span class="p">)</span>
+
+<span class="n">example_data</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">example_loader</span><span class="p">))</span>
+
+<span class="n">example_images</span> <span class="o">=</span> <span class="n">example_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">example_labels</span> <span class="o">=</span> <span class="n">example_data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+<span class="n">predicted_labels</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">example_data</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span><span class="mi">12</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">example_images</span><span class="p">)):</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="n">image</span> <span class="o">=</span> <span class="n">example_images</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">real_label</span> <span class="o">=</span> <span class="n">example_labels</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="n">predicted_label</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predicted_labels</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">image</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Real: </span><span class="si">{</span><span class="n">real_label</span><span class="si">}</span><span class="s2"> Pred: </span><span class="si">{</span><span class="n">predicted_label</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">axis</span><span class="p">(</span><span class="s2">&quot;off&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/241677c6f170a1c9908c6b7b98f13c06b21102821e98b32507d1dbc9fdff828a.png" src="../_images/241677c6f170a1c9908c6b7b98f13c06b21102821e98b32507d1dbc9fdff828a.png" />
+</div>
+</div>
+<p>It looks like our model works as expected.</p>
+</section>
+<section id="customizing-trainer-with-trainingarguments">
+<h2>Customizing Trainer with TrainingArguments<a class="headerlink" href="#customizing-trainer-with-trainingarguments" title="Link to this heading"></a></h2>
+<p>Trainer supports customizing most aspects of it via <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/main_classes/trainer#transformers.TrainingArguments">TrainingArguments</a>.</p>
+<p>Arguments range from logging configurations to optimizer settings.</p>
+<p>For example if we want to train for 1 epoch and want output only every 1000 steps, we can configure it easily:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrainingArguments</span>
+
+<span class="n">training_args</span> <span class="o">=</span> <span class="n">TrainingArguments</span><span class="p">(</span>
+    <span class="n">logging_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">num_train_epochs</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">)</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">MNISTTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">training_args</span><span class="p">,</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+    <span class="n">eval_dataset</span><span class="o">=</span><span class="n">test_dataset</span><span class="p">,</span>
+    <span class="n">data_collator</span><span class="o">=</span><span class="n">collator_fn</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_html">
+    <div>
+      
+      <progress value='7500' max='7500' style='width:300px; height:20px; vertical-align: middle;'></progress>
+      [7500/7500 00:14, Epoch 1/1]
+    </div>
+    <table border="1" class="dataframe">
+  <thead>
+ <tr style="text-align: left;">
+      <th>Step</th>
+      <th>Training Loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1000</td>
+      <td>0.215100</td>
+    </tr>
+    <tr>
+      <td>2000</td>
+      <td>0.189400</td>
+    </tr>
+    <tr>
+      <td>3000</td>
+      <td>0.206700</td>
+    </tr>
+    <tr>
+      <td>4000</td>
+      <td>0.203200</td>
+    </tr>
+    <tr>
+      <td>5000</td>
+      <td>0.194800</td>
+    </tr>
+    <tr>
+      <td>6000</td>
+      <td>0.192600</td>
+    </tr>
+    <tr>
+      <td>7000</td>
+      <td>0.202900</td>
+    </tr>
+  </tbody>
+</table><p></div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>TrainOutput(global_step=7500, training_loss=0.19971505533854167, metrics={&#39;train_runtime&#39;: 14.5625, &#39;train_samples_per_second&#39;: 4120.183, &#39;train_steps_per_second&#39;: 515.023, &#39;total_flos&#39;: 0.0, &#39;train_loss&#39;: 0.19971505533854167, &#39;epoch&#39;: 1.0})
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../inference/" class="btn btn-neutral float-left" title="Model inference with Hugging Face" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../accelerate/" class="btn btn-neutral float-right" title="Multi-GPU training with Accelerate" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-, The contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

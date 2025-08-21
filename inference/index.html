@@ -1,0 +1,498 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Model inference with Hugging Face &mdash; Simple HuggingFace  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=949a1ff5" />
+      <link rel="stylesheet" type="text/css" href="../_static/togglebutton.css?v=13237357" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_lesson.css?v=e9df6548" />
+      <link rel="stylesheet" type="text/css" href="../_static/term_role_formatting.css?v=4194e21c" />
+      <link rel="stylesheet" type="text/css" href="../_static/sphinx_rtd_theme_ext_color_contrast.css?v=8e8ea19f" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=187304be"></script>
+      <script src="../_static/doctools.js?v=9a2dae69"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+      <script src="../_static/copybutton.js?v=b3c80e7a"></script>
+      <script src="../_static/minipres.js?v=a0d29692"></script>
+      <script>let toggleHintShow = 'Click to show';</script>
+      <script>let toggleHintHide = 'Click to hide';</script>
+      <script>let toggleOpenOnPrint = 'true';</script>
+      <script src="../_static/togglebutton.js?v=4a39c7ea"></script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+      <script>var togglebuttonSelector = '.toggle, .admonition.dropdown';</script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs"></script>
+      <script type="module" src="https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs"></script>
+      <script type="module">import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";import elkLayouts from "https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0.1.4/dist/mermaid-layout-elk.esm.min.mjs";mermaid.registerLayoutLoaders(elkLayouts);mermaid.initialize({startOnLoad:false});</script>
+      <script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11.2.0/dist/mermaid.esm.min.mjs";
+window.addEventListener("load", () => mermaid.run());
+</script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex/" />
+    <link rel="search" title="Search" href="../search/" />
+    <link rel="next" title="Model training with Hugging Face" href="../training/" />
+    <link rel="prev" title="Setting up Hugging Face" href="../setting-up/" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../" class="icon icon-home">
+            Simple HuggingFace
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search/" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../setting-up/">Setting up Hugging Face</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Model inference with Hugging Face</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hugging-face-models">Hugging Face models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#transformers-pipeline">Transformers pipeline</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#handling-system-prompts-when-using-llms">Handling system prompts when using LLMs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#setting-a-system-prompt">Setting a system prompt</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#reusing-the-system-prompt">Reusing the system prompt</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#batch-inference">Batch inference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../training/">Model training with Hugging Face</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accelerate/">Multi-GPU training with Accelerate</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../">Simple HuggingFace</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Model inference with Hugging Face</li>
+      <li class="wy-breadcrumbs-aside">
+              <a href="https://github.com/aaltorse/simple-huggingface/blob/main/content/inference.ipynb" class="fa fa-github"> Edit on GitHub</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="model-inference-with-hugging-face">
+<h1>Model inference with Hugging Face<a class="headerlink" href="#model-inference-with-hugging-face" title="Link to this heading"></a></h1>
+<p>Nowadays it is very common to run inference with models released in the Hugging Face hub.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="c1"># Here environment variable WRKDIR points to a personal work directory</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_HOME&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;WRKDIR&quot;</span><span class="p">]</span><span class="si">}</span><span class="s2">/huggingface&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;HF_TOKEN_PATH&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;~/.cache/huggingface/token&quot;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<section id="hugging-face-models">
+<h2>Hugging Face models<a class="headerlink" href="#hugging-face-models" title="Link to this heading"></a></h2>
+<p>Hugging Face models are <a class="reference external" href="https://huggingface.co/docs/transformers/en/models">an abstraction</a> that describes a pretrained model that can be used for different use cases.</p>
+<p>Because different models have different structures they are all collected under <a class="reference external" href="https://huggingface.co/docs/transformers/en/model_doc/auto">AutoModel</a> classes that abstract the model loading and usage.</p>
+<p>AutoModels are further extended by specialized classes that define how the model behaves with different tasks. Each model has supported tasks enabled by extending classes such as <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/model_doc/auto#transformers.AutoModelForCausalLM">AutoModelForCausalLM</a>, <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/model_doc/auto#transformers.AutoModelForQuestionAnswering">AutoModelForQuestionAnswering</a> or <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/model_doc/auto#transformers.AutoModelForImageClassification">AutoModelForImageClassification</a>.</p>
+<p>You can specify the model yourself by using <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/model_doc/auto#transformers.AutoModel.from_pretrained">AutoModel.from_pretrained</a> or the function with the same name from the subclass e.g. <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/model_doc/auto#transformers.AutoModelForCausalLM.from_pretrained">AutoModelForCausalLM.from_pretrained</a>, but using pipeline is usually easier.</p>
+</section>
+<section id="transformers-pipeline">
+<h2>Transformers pipeline<a class="headerlink" href="#transformers-pipeline" title="Link to this heading"></a></h2>
+<p>Different tasks are enabled on different models. However, all AutoModels support Transformer’s <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/pipeline_tutorial">pipeline API</a> that makes launching models relatively simple. You just need to provide the pipeline with the task name and the model name and it will handle the rest.</p>
+<p><a class="reference external" href="https://huggingface.co/docs/transformers/main/en/main_classes/pipelines#transformers.Pipeline">Pipeline</a> itself has multiple subclasses like <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/main_classes/pipelines#transformers.TextGenerationPipeline">TextGenerationPipeline</a> that define all steps needed to run the model from preprocessing to the result decoding.</p>
+<p><a class="reference external" href="https://huggingface.co/docs/transformers/main/en/main_classes/pipelines#transformers.Pipeline">Pipeline-class</a> takes huge number different options that can be used to modify the . When pipeline is created, many of these options are passed to various classes that pipeline creates.</p>
+<p>Returned Pipeline has all of the different things baked into one class:</p>
+<object data="../_images/mermaid-30fc59270914b6f90d1f987b6d28d5585e3e1299.svg" type="image/svg+xml">
+            <p class="warning">flowchart LR
+
+Pf[pipeline-function] --&gt; P[Preprocessor chosen based on task]
+Pf --&gt; T[Tokenizer chosen based on task]
+Pf --&gt; A[AutoModel chosen based on task]
+Pf --&gt; F[Framework chosen based on settings]
+P --&gt; Pc[Pipeline-class]
+T --&gt; Pc
+A --&gt; Pc
+F --&gt; Pc</p></object>
+<p>When this class is called to do its task, it will run through the full pipeline:</p>
+<object data="../_images/mermaid-555eec65b14373124ef622b2ed13dd2141f09266.svg" type="image/svg+xml">
+            <p class="warning">flowchart TD
+
+Pi[&quot;pipeline(data)&quot;] --&gt; P[&quot;Preprocessor (e.g. AutoProcessor)&quot;]
+P --&gt; Te[&quot;Tokenizer encoding (e.g. AutoTokenizer)&quot;]
+Te --&gt; A[&quot;AutoModel (e.g. AutoModelForCausalLM)&quot;]
+A --&gt; M[&quot;Model (e.g. mistralai/Mistral-7B-Instruct-v0.3)&quot;]
+M --&gt; F[&quot;Framework (e.g. PyTorch)&quot;]
+F --&gt; O[Model output]
+O --&gt; Td[Tokenizer decoding]
+Td --&gt; Pd[Pipeline output]</p></object>
+<p>In practice all of this is just a couple lines of code:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">pipeline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">model_id</span> <span class="o">=</span> <span class="s2">&quot;mistralai/Mistral-7B-Instruct-v0.3&quot;</span>
+
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span>
+    <span class="s2">&quot;text-generation&quot;</span><span class="p">,</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model_id</span><span class="p">,</span>
+    <span class="n">torch_dtype</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "7223c9a56a734195bdb8760ea0791b32", "version_major": 2, "version_minor": 0}</script><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Device set to use cuda:0
+</pre></div>
+</div>
+</div>
+</div>
+<p>Calling the pipeline is simple as well:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pipe</span><span class="p">(</span><span class="s2">&quot;In 200 words or less, how do you make spaghetti bolognaise?&quot;</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Setting `pad_token_id` to `eos_token_id`:2 for open-end generation.
+</pre></div>
+</div>
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[{&#39;generated_text&#39;: &#39;In 200 words or less, how do you make spaghetti bolognaise?\n\n1. Sauté onion, carrot, celery, and garlic in olive oil until soft.\n2. Add ground meat, cook until browned.\n3. Stir in tomato paste, canned tomatoes, beef broth, wine (optional), bay leaves, and thyme.\n4. Simmer for 30 minutes, stirring occasionally.\n5. Season with salt, pepper, and sugar to taste.\n6. Cook spaghetti according to package instructions, drain.\n7. Toss spaghetti with sauce, garnish with grated Parmesan cheese and fresh basil.&#39;}]
+</pre></div>
+</div>
+</div>
+</div>
+<p>We can silence the warning about the <code class="docutils literal notranslate"><span class="pre">pad_token_id</span></code> by using the same pad token for the model as we use for the tokenizer.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">pipe</span><span class="p">(</span><span class="s2">&quot;In 200 words or less, how do you make spaghetti bolognaise?&quot;</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="o">=</span><span class="n">pipe</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token_id</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[{&#39;generated_text&#39;: &#39;In 200 words or less, how do you make spaghetti bolognaise?\n\nCook spaghetti according to package directions. For the bolognaise sauce, sauté onion, carrot, and celery in olive oil until tender. Add ground beef, cook until browned. Stir in tomato paste, crushed tomatoes, salt, pepper, and basil. Simmer for 20 minutes. Drain spaghetti and toss with sauce. Serve with grated Parmesan cheese. Enjoy!&#39;}]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="handling-system-prompts-when-using-llms">
+<h2>Handling system prompts when using LLMs<a class="headerlink" href="#handling-system-prompts-when-using-llms" title="Link to this heading"></a></h2>
+<section id="setting-a-system-prompt">
+<h3>Setting a system prompt<a class="headerlink" href="#setting-a-system-prompt" title="Link to this heading"></a></h3>
+<p>LLMs that are fine-tuned for instruction answering use a system prompt that specifies how the model should behave. Typically system prompt contains ground truths and instructions that the LLM is expected to know and follow.</p>
+<p>If no system prompt is provided the model will use a default one (e.g. <a class="reference external" href="https://github.com/huggingface/transformers/blob/6b5bd117231f969713ed79fd4870903ab3c93edf/src/transformers/models/llama/tokenization_llama.py#L47">this one for Llama based models</a>).</p>
+<p>However, in many cases overriding the system prompt is the best way of controlling the LLMs behaviour because the LLM has been trained to emphasize its contents.</p>
+<p>Changing the system prompt is done by specifying a message chain where the first message is a system message.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">messages</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;You&#39;re a three start Michelin chef answering questions from the public. Answer in 200 words or less.&quot;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="s2">&quot;How do you make spaghetti bolognaise?&quot;</span><span class="p">},</span>
+<span class="p">]</span>
+
+<span class="n">pipe</span><span class="p">(</span><span class="n">messages</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="o">=</span><span class="n">pipe</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token_id</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[{&#39;generated_text&#39;: [{&#39;role&#39;: &#39;system&#39;,
+    &#39;content&#39;: &quot;You&#39;re a three start Michelin chef answering questions from the public. Answer in 200 words or less.&quot;},
+   {&#39;role&#39;: &#39;user&#39;, &#39;content&#39;: &#39;How do you make spaghetti bolognaise?&#39;},
+   {&#39;role&#39;: &#39;assistant&#39;,
+    &#39;content&#39;: &#39; As a Michelin-starred chef, I aim to elevate classic dishes while maintaining their essence. My Spaghetti Bolognese recipe balances tradition with refinement.\n\nIngredients:\n1. 500g high-quality ground beef\n2. 1 large yellow onion, finely chopped\n3. 2 carrots, finely chopped\n4. 2 celery stalks, finely chopped\n5. 4 cloves garlic, minced\n6. 1 cup red wine (preferably a full-bodied Italian variety)\n7. 1 can (400g) san Marzano tomatoes\n8. 500g spaghetti\n9. Extra-virgin olive oil\n10. Salt and freshly ground black pepper, to taste\n11. Parmesan cheese, grated (optional)\n\nInstructions:\n1. Heat oil in a large pan over medium heat. Add onion, carrots, celery, and garlic, cooking until softened.\n2. Add ground beef, season with salt and pepper, and cook until browned.\n3. Pour in red wine, allowing it to reduce slightly.\n4. Add tomatoes and their juice, simmering the sauce for at least 1 hour, stirring occasionally.\n5. Cook spaghetti according to package instructions, then drain.\n6. Toss cooked spaghetti in sauce, serving with a sprinkle of Parmesan cheese, if desired.\n\nEnjoy this authentic Italian dish with a glass of Barolo or Chianti for the perfect pairing. Buon appetito!&#39;}]}]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="reusing-the-system-prompt">
+<h3>Reusing the system prompt<a class="headerlink" href="#reusing-the-system-prompt" title="Link to this heading"></a></h3>
+<p>Sometimes you’ll want to reuse the same system prompt for multiple messages. An easy way of achieving this by creating a small helper function that injects the system prompt for every message.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">prompt_creator</span><span class="p">(</span><span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">messages</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">messages</span><span class="p">:</span>
+        <span class="n">messages</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">messages</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">system_prompt</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">message</span><span class="p">},</span>
+        <span class="p">]</span>
+
+<span class="n">outputs</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">(</span>
+    <span class="n">prompt_creator</span><span class="p">(</span>
+        <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;You&#39;re a three start Michelin chef answering questions from the public. Answer in 200 words or less.&quot;</span><span class="p">,</span>
+        <span class="n">messages</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;How do you make spaghetti bolognaise?&quot;</span><span class="p">,</span> <span class="s2">&quot;How do you make a cake?&quot;</span><span class="p">]</span>
+    <span class="p">),</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="o">=</span><span class="n">pipe</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token_id</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[{&#39;generated_text&#39;: [{&#39;role&#39;: &#39;system&#39;, &#39;content&#39;: &quot;You&#39;re a three start Michelin chef answering questions from the public. Answer in 200 words or less.&quot;}, {&#39;role&#39;: &#39;user&#39;, &#39;content&#39;: &#39;How do you make spaghetti bolognaise?&#39;}, {&#39;role&#39;: &#39;assistant&#39;, &#39;content&#39;: &quot; Creating a delectable Spaghetti Bolognese requires a harmonious blend of quality ingredients and patience. Here&#39;s a simplified recipe:\n\n1. Gently sauté finely chopped onion, carrot, and celery in olive oil until they soften. Season with salt and pepper.\n\n2. Add ground beef, breaking it up with a wooden spoon. Cook until browned, then drain off any excess fat.\n\n3. Stir in a handful of tomato paste and cook for a minute or two. This will help develop a richer flavor.\n\n4. Pour in a can of whole peeled tomatoes, crushed by hand. Add a glass of red wine if desired, and let it simmer for about 30 minutes.\n\n5. Meanwhile, cook your spaghetti al dente according to package instructions.\n\n6. Stir in grated Parmesan cheese and fresh basil leaves. Taste and adjust seasoning if necessary.\n\n7. Serve your Spaghetti Bolognese hot, with a dusting of Parmesan on top if desired. Buon appetito!&quot;}]}]
+[{&#39;generated_text&#39;: [{&#39;role&#39;: &#39;system&#39;, &#39;content&#39;: &quot;You&#39;re a three start Michelin chef answering questions from the public. Answer in 200 words or less.&quot;}, {&#39;role&#39;: &#39;user&#39;, &#39;content&#39;: &#39;How do you make a cake?&#39;}, {&#39;role&#39;: &#39;assistant&#39;, &#39;content&#39;: &quot; As a three-star Michelin chef, I pride myself on the precision and creativity in my culinary creations. Here&#39;s a simplified version of a classic sponge cake recipe, which you can adapt and elevate to your taste.\n\nIngredients:\n1. 120g unsalted butter, softened\n2. 120g caster sugar\n3. 2 large eggs\n4. 120g self-raising flour\n5. 1 tsp baking powder\n6. 2 tbsp milk\n7. 1 tsp vanilla extract (optional)\n\nInstructions:\n1. Preheat the oven to 180°C (160°C fan) / Gas Mark 4 / 350°F. Grease and line an 18cm square cake tin.\n2. In a large mixing bowl, cream together the butter and sugar until light and fluffy.\n3. Beat in the eggs, one at a time, followed by the vanilla extract.\n4. Sift in the flour and baking powder, then fold them gently into the mixture.\n5. Gradually add the milk while continuing to fold, ensuring the mixture remains smooth.\n6. Pour the batter into the prepared cake tin and spread it evenly.\n7. Bake for 20-25 minutes, or until a toothpick inserted into the center of the cake comes out clean.\n8. Allow the cake to cool in the tin for 10 minutes, then transfer it to a wire rack to cool completely.\n\nYou can decorate this cake with your favorite frosting, fruit, or chocolate ganache. Bon appétit!&quot;}]}]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="batch-inference">
+<h2>Batch inference<a class="headerlink" href="#batch-inference" title="Link to this heading"></a></h2>
+<p>Pipeline also supports <a class="reference external" href="https://huggingface.co/docs/transformers/main/en/pipeline_tutorial#large-datasets">batch inference</a>, but its performance depends heavily on the data ingestion.</p>
+<p>If the data is provided in an optimal form i.e. as datasets, then pipeline can automatically convert the data into batched tensors.</p>
+<p>This can be achieved by creating a dataset out of the data and doing the system prompt creation for the whole dataset. Pipeline will automatically convert the dataset into a efficient batches.</p>
+<p>Lets consider a <a class="reference external" href="https://huggingface.co/datasets/stanfordnlp/imdb">stanfordnlp/imdb</a>-dataset that contains reviews of movies and the perceived sentiment of those reviews (positive or negative).</p>
+<p>Let’s take a subset of reviews designed for training.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_reviews</span> <span class="o">=</span> <span class="mi">256</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dataset</span>
+
+<span class="n">ds</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="s2">&quot;stanfordnlp/imdb&quot;</span><span class="p">)[</span><span class="s1">&#39;train&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shuffle</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="n">n_reviews</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Each review contains a <code class="docutils literal notranslate"><span class="pre">text</span></code>-portion and a <code class="docutils literal notranslate"><span class="pre">label</span></code>-portion.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">ds</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;text&#39;: &quot;Skip McCoy is a three time loser pick pocket, unable to curb his instincts back on the street, he picks the purse of Candy on a subway train. What he doesn&#39;t realise is that Candy is carrying top secret microfilm, microfilm that is of high interest to many many organisations.&lt;br /&gt;&lt;br /&gt;Director Samuel Fuller has crafted an exceptional drama set amongst the seedy underworld of New York City. Communist spies and shady government operatives all blend together to make Pickup On South Street a riveting viewing from first minute to the last. Based around a Dwight Taylor story called Blaze Of Glory, Fuller enthused this adaptation with heavy set political agenda, something that many at the time felt was over done, but to only focus on its anti communist leanings is doing it a big disservice.&lt;br /&gt;&lt;br /&gt;Digging a little deeper and you find characters as intriguing as any that Fuller has directed, the main protagonist for one is the hero of the piece, a crook and a shallow human being, his heroics are not born out of love for his country, they are born out of his sheer stubborn streak. It&#39;s quite an achievement that Fuller has crafted one of the best anti heroes of the 50s, and i&#39;m sure he was most grateful to the performance of Richard Widmark as McCoy, all grin and icy cold heart, his interplay with the wonderful Jean Peters as Candy is excellent, and is the films heart. However it is the Oscar nominated Thelma Ritter who takes the acting honours, her Moe is strong and as seedy as the surrounding characters, but there is a tired warmth to her that Ritter conveys majestically.&lt;br /&gt;&lt;br /&gt;It&#39;s a B movie in texture but an A film in execution, Pickup On South Street is a real classy and entertaining film that is the best of its most intriguing director. 9/10&quot;,
+ &#39;label&#39;: 1}
+</pre></div>
+</div>
+</div>
+</div>
+<p>For sentiment analysis, we need to switch out the system prompt and we can do it by creating a function that processes a review and returns corresponding messages.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">data_processor</span><span class="p">(</span><span class="n">review</span><span class="p">):</span>
+
+    <span class="n">system_prompt</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">    You&#39;re an accurate classification engine designed to determine if a movie review has a positive or negative sentiment.</span>
+<span class="s2">    </span>
+<span class="s2">    Reviews can be positive or negative. You&#39;re given a review and you will respond with 0 if the sentiment of the review is negative and 1 if the review is positive.</span>
+<span class="s2">    </span>
+<span class="s2">    Give no other output.</span>
+<span class="s2">    &quot;&quot;&quot;</span>
+    
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s1">&#39;messages&#39;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;system&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">system_prompt</span><span class="p">},</span>
+            <span class="p">{</span><span class="s2">&quot;role&quot;</span><span class="p">:</span> <span class="s2">&quot;user&quot;</span><span class="p">,</span> <span class="s2">&quot;content&quot;</span><span class="p">:</span> <span class="n">review</span><span class="p">[</span><span class="s1">&#39;text&#39;</span><span class="p">]}</span>
+        <span class="p">]</span>
+    <span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now that we have a data preprocessing function, we can map it over the dataset to create messages we want to pass to the pipeline.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">ds</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_processor</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "91ad1f37a4bd4807bc1c60af45006a7a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">ds</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>{&#39;text&#39;: &quot;Skip McCoy is a three time loser pick pocket, unable to curb his instincts back on the street, he picks the purse of Candy on a subway train. What he doesn&#39;t realise is that Candy is carrying top secret microfilm, microfilm that is of high interest to many many organisations.&lt;br /&gt;&lt;br /&gt;Director Samuel Fuller has crafted an exceptional drama set amongst the seedy underworld of New York City. Communist spies and shady government operatives all blend together to make Pickup On South Street a riveting viewing from first minute to the last. Based around a Dwight Taylor story called Blaze Of Glory, Fuller enthused this adaptation with heavy set political agenda, something that many at the time felt was over done, but to only focus on its anti communist leanings is doing it a big disservice.&lt;br /&gt;&lt;br /&gt;Digging a little deeper and you find characters as intriguing as any that Fuller has directed, the main protagonist for one is the hero of the piece, a crook and a shallow human being, his heroics are not born out of love for his country, they are born out of his sheer stubborn streak. It&#39;s quite an achievement that Fuller has crafted one of the best anti heroes of the 50s, and i&#39;m sure he was most grateful to the performance of Richard Widmark as McCoy, all grin and icy cold heart, his interplay with the wonderful Jean Peters as Candy is excellent, and is the films heart. However it is the Oscar nominated Thelma Ritter who takes the acting honours, her Moe is strong and as seedy as the surrounding characters, but there is a tired warmth to her that Ritter conveys majestically.&lt;br /&gt;&lt;br /&gt;It&#39;s a B movie in texture but an A film in execution, Pickup On South Street is a real classy and entertaining film that is the best of its most intriguing director. 9/10&quot;,
+ &#39;label&#39;: 1,
+ &#39;messages&#39;: [{&#39;content&#39;: &quot;\n    You&#39;re an accurate classification engine designed to determine if a movie review has a positive or negative sentiment.\n\n    Reviews can be positive or negative. You&#39;re given a review and you will respond with 0 if the sentiment of the review is negative and 1 if the review is positive.\n\n    Give no other output.\n    &quot;,
+   &#39;role&#39;: &#39;system&#39;},
+  {&#39;content&#39;: &quot;Skip McCoy is a three time loser pick pocket, unable to curb his instincts back on the street, he picks the purse of Candy on a subway train. What he doesn&#39;t realise is that Candy is carrying top secret microfilm, microfilm that is of high interest to many many organisations.&lt;br /&gt;&lt;br /&gt;Director Samuel Fuller has crafted an exceptional drama set amongst the seedy underworld of New York City. Communist spies and shady government operatives all blend together to make Pickup On South Street a riveting viewing from first minute to the last. Based around a Dwight Taylor story called Blaze Of Glory, Fuller enthused this adaptation with heavy set political agenda, something that many at the time felt was over done, but to only focus on its anti communist leanings is doing it a big disservice.&lt;br /&gt;&lt;br /&gt;Digging a little deeper and you find characters as intriguing as any that Fuller has directed, the main protagonist for one is the hero of the piece, a crook and a shallow human being, his heroics are not born out of love for his country, they are born out of his sheer stubborn streak. It&#39;s quite an achievement that Fuller has crafted one of the best anti heroes of the 50s, and i&#39;m sure he was most grateful to the performance of Richard Widmark as McCoy, all grin and icy cold heart, his interplay with the wonderful Jean Peters as Candy is excellent, and is the films heart. However it is the Oscar nominated Thelma Ritter who takes the acting honours, her Moe is strong and as seedy as the surrounding characters, but there is a tired warmth to her that Ritter conveys majestically.&lt;br /&gt;&lt;br /&gt;It&#39;s a B movie in texture but an A film in execution, Pickup On South Street is a real classy and entertaining film that is the best of its most intriguing director. 9/10&quot;,
+   &#39;role&#39;: &#39;user&#39;}]}
+</pre></div>
+</div>
+</div>
+</div>
+<p>We only want to pass the <code class="docutils literal notranslate"><span class="pre">messages</span></code>-values to the pipeline and we can use an utility class called <code class="docutils literal notranslate"><span class="pre">KeyDataset</span></code> to pick only values that are under the <code class="docutils literal notranslate"><span class="pre">messages</span></code>-key.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">transformers.pipelines.pt_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">KeyDataset</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now we can run and time the pipeline execution:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="o">%%time</span>
+
+<span class="n">sentiments</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">sentiment</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;generated_text&#39;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;content&#39;</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">sentiment</span> <span class="ow">in</span> <span class="n">pipe</span><span class="p">(</span>
+            <span class="n">KeyDataset</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;messages&#39;</span><span class="p">),</span>
+            <span class="n">pad_token_id</span><span class="o">=</span><span class="n">pipe</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">eos_token_id</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 27.2 s, sys: 847 ms, total: 28 s
+Wall time: 28.1 s
+</pre></div>
+</div>
+</div>
+</div>
+<p>We can then compare the results with the ground truth:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">KeyDataset</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;label&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">matches</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">bad_outputs</span> <span class="o">=</span> <span class="mi">0</span>
+
+<span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">sentiment</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">sentiments</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sentiment</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sentiment</span><span class="p">)</span>
+        <span class="n">matches</span> <span class="o">+=</span> <span class="p">(</span><span class="n">sentiment</span> <span class="o">==</span> <span class="n">label</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">bad_outputs</span> <span class="o">+=</span> <span class="mi">1</span>    
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">matches</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_reviews</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> %&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Bad outputs: </span><span class="si">{</span><span class="n">bad_outputs</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Accuracy: 90.23 %
+Bad outputs: 2
+</pre></div>
+</div>
+</div>
+</div>
+<p>As a comparison, we can try out a simple sentiment analysis pipeline:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sentiment_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span><span class="s2">&quot;sentiment-analysis&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="s2">&quot;distilbert/distilbert-base-uncased-finetuned-sst-2-english&quot;</span><span class="p">,</span> <span class="n">truncation</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Device set to use cuda:0
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sentiments</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+    <span class="mi">0</span> <span class="k">if</span> <span class="n">sentiment</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;NEGATIVE&quot;</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">sentiment</span> <span class="ow">in</span> <span class="n">sentiment_pipeline</span><span class="p">(</span>
+            <span class="n">KeyDataset</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;text&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+<span class="p">])</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">matches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">labels</span> <span class="o">==</span> <span class="n">sentiments</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="mi">100</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">matches</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="n">n_reviews</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> %&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Accuracy: 84.77 %
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../setting-up/" class="btn btn-neutral float-left" title="Setting up Hugging Face" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../training/" class="btn btn-neutral float-right" title="Model training with Hugging Face" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025-, The contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
