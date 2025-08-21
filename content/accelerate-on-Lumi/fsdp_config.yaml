@@ -14,11 +14,8 @@ fsdp_config:
   fsdp_sync_module_states: true
   fsdp_use_orig_params: true
   fsdp_activation_checkpointing: true
-machine_rank: 0
 main_training_function: main
 mixed_precision: bf16
-num_machines: 2
-num_processes: 16
 rdzv_backend: static
 same_network: true
 tpu_env: []
